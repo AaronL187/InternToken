@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\Work\\SolidityTraining\\InternToken\\contracts\\InternToken.sol": {
-      "lastModificationDate": 1742547907237,
-      "contentHash": "4a6827e67d8403d7da2a072c56311bd9",
+      "lastModificationDate": 1742550792874,
+      "contentHash": "ae061950e90ec7328ddb936aa3d44587",
       "sourceName": "contracts/InternToken.sol",
       "solcConfig": {
         "version": "0.8.20",

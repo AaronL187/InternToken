@@ -16,7 +16,7 @@ contract InternToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ERC20Permi
         Ownable(initialOwner)
         ERC20Permit("InternToken")
     {
-        _mint(recipient, 500000 * 10 ** decimals());
+        _mint(recipient, 500000 * 10 ** 18);
     }
 
     function pause() public onlyOwner {
@@ -44,9 +44,10 @@ contract InternToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ERC20Permi
     function mint(address to, uint256 amount) public onlyOwner {
         require(to != address(0), "InternToken: mint to the zero address");
         require(amount > 0, "InternToken: mint amount must be greater than 0");
-        require(totalSupply() + amount <= MAX_SUPPLY, "InternToken: mint amount exceeds total supply");
-        _mint(to, amount);
-        emit Mint(to, amount);
+        uint256 mintAmount = amount * 10 ** decimals();
+        require(totalSupply() + mintAmount <= MAX_SUPPLY, "InternToken: mint amount exceeds total supply");
+        _mint(to, mintAmount);
+        emit Mint(to, mintAmount);
     }
 
     // The following functions are overrides required by Solidity.
