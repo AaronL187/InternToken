@@ -62,6 +62,7 @@ describe("InternToken Contract", function () {
 
     await hardhatToken.connect(addr1).transfer(addr2.address, transferAmount);
 
+    const user1Balance = await hardhatToken.balanceOf(addr1.address);
     const user2Balance = await hardhatToken.balanceOf(addr2.address);
     const treasuryAfter = await hardhatToken.balanceOf(treasuryWallet.address);
     const totalSupplyAfter = await hardhatToken.totalSupply();
