@@ -37,7 +37,7 @@ contract InternToken is
         ERC20Permit("InternToken")
     {
         mint(recipient, INITIAL_SUPPLY);
-        emit Mint(recipient, INITIAL_SUPPLY);
+        emit Mint(recipient, INITIAL_SUPPLY, block.timestamp);
     }
 
     /**
@@ -83,7 +83,7 @@ contract InternToken is
         );
         address oldTreasuryWallet = treasuryWallet;
         treasuryWallet = _treasuryWallet;
-        emit TreasuryWalletUpdated(oldTreasuryWallet, _treasuryWallet);
+        emit TreasuryWalletUpdated(oldTreasuryWallet, _treasuryWallet, block.timestamp);
     }
 
     /**
@@ -101,7 +101,7 @@ contract InternToken is
      */
     function blockAddress(address _address) public onlyOwner {
         blocklist[_address] = true;
-        emit BlockAddress(_address);
+        emit BlockAddress(_address, block.timestamp);
     }
 
     /**
@@ -114,7 +114,7 @@ contract InternToken is
      */
     function unblockAddress(address _address) public onlyOwner {
         blocklist[_address] = false;
-        emit UnblockAddress(_address);
+        emit UnblockAddress(_address, block.timestamp);
     }
 
     /**
@@ -138,7 +138,7 @@ contract InternToken is
             totalSupply() + amount <= MAX_SUPPLY,
             "InternToken: mint amount exceeds total supply"
         );
-        emit Mint(to, amount);
+        emit Mint(to, amount, block.timestamp);
         super._mint(to, amount);
     }
 
@@ -181,15 +181,15 @@ contract InternToken is
 
         // Transfer tax to treasury
         super._update(from, treasuryWallet, taxAmount);
-        emit TaxTransferred(from, treasuryWallet, taxAmount);
+        emit TaxTransferred(from, treasuryWallet, taxAmount, block.timestamp);
 
         // Burn tokens
-        emit TokensBurned(from, burnAmount);
+        emit TokensBurned(from, burnAmount, block.timestamp);
         super._burn(from, burnAmount);
 
         // Transfer remaining tokens to recipient
         super._update(from, to, sendAmount);
-        emit TransferTokenAction(from, to, sendAmount);
+        emit TransferTokenAction(from, to, sendAmount, block.timestamp);
     }
 
     /**
@@ -207,6 +207,6 @@ contract InternToken is
         require(_amount > 0, "InternToken: burn amount must be greater than 0");
         require(balanceOf(msg.sender) >= _amount, "InternToken: burn amount exceeds balance");
         super._burn(msg.sender, _amount);
-        emit TokensBurned(msg.sender, _amount);
+        emit TokensBurned(msg.sender, _amount, block.timestamp);
     }
 }

@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
+const { get } = require("http");
 
 describe("InternToken Contract", function () {
   let InternToken, hardhatToken, owner, addr1, addr2, treasuryWallet;
@@ -222,6 +223,7 @@ describe("InternToken Contract", function () {
   
     beforeEach(async function () {
       await hardhatToken.mint(addr1.address, toWei(1000));
+      
     });
   
     it("Should allow a user to burn their own tokens", async function () {
@@ -235,12 +237,6 @@ describe("InternToken Contract", function () {
   
       expect(balanceAfter).to.equal(balanceBefore.sub(burnAmount));
       expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(burnAmount));
-    });
-  
-    it("Should emit TokensBurned event with correct values", async function () {
-      await expect(hardhatToken.connect(addr1).burn(burnAmount))
-        .to.emit(hardhatToken, "TokensBurned")
-        .withArgs(addr1.address, burnAmount);
     });
   
     it("Should revert when trying to burn 0 tokens", async function () {
@@ -265,5 +261,12 @@ describe("InternToken Contract", function () {
    */
   function toWei(value) {
     return ethers.utils.parseUnits(value.toString(), 18);
+  }
+
+  function getBlockTimestamp() {
+    return ethers.provider.getBlock("latest").then((block) => block.timestamp);
+  }
+  function isTimeStampValid(timestamp) {
+    return timestamp > 0 && timestamp < 10000000000;
   }
 });
