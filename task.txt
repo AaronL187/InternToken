@@ -1,0 +1,43 @@
+Exercise 1: Utility Token with Real-World Tokenomics
+Objective
+Design, code, test, and deploy a utility ERC-20 token that mimics key tokenomics features of popular tokens like BNB (Binance Coin) or CRO (Cronos). This exercise emphasizes backend development (Solidity, Hardhat, testing, and deployment) and requires a strong understanding of ERC-20 internals and tokenomics logic.
+Token Overview
+Create a utility token called InternToken (INT) with the following specifications:
+Basic Info:
+Name: InternToken
+Symbol: INT
+Decimals: 18
+Initial Supply: 500,000 INT minted to the deployer
+Max Supply Cap: 1,000,000 INT
+Tokenomics Features:
+Mintable – Owner can mint tokens, respecting the total cap.
+Burnable – Any holder can burn their tokens.
+Auto Burn on Transfer – 1% of every transfer is automatically burned.
+Transfer Tax – 2% of every transfer goes to a predefined Treasury Wallet.
+Pausable – The owner can pause all transfers.
+Ownable – Access control for minting and pausing.
+Blacklist - The owner can pause transactions from a single wallet.
+Requirements
+Smart Contract
+Use Solidity 0.8.x
+Use OpenZeppelin libraries where applicable
+Must implement:
+mint(address to, uint256 amount)
+burn(uint256 amount)
+_transfer override to implement:
+1% burn
+2% tax to Treasury
+Pause/unpause functions for emergency control
+Access control using Ownable
+Tests
+Write unit tests using Hardhat and Chai
+Cover:
+Initial supply, cap, minting, and burning
+Transfer mechanics with auto-burn and tax
+Pausing/unpausing
+Edge cases (e.g. minting over cap, pausing blocks transfer, zero-address checks)
+Deployment
+Deploy to Sepolia Testnet
+Use Hardhat
+Use Alchemy or Infura for endpoint
+Use .env for sensitive config (private key, API key)
