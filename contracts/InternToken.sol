@@ -17,7 +17,7 @@ contract InternToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ERC20Permi
         Ownable(initialOwner)
         ERC20Permit("InternToken")
     {
-        _mint(recipient, 500000 * 10 ** 18);
+        mint(recipient, 500000 * 10 ** 18);
     }
 
     function pause() public onlyOwner {
@@ -121,7 +121,7 @@ contract InternToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ERC20Permi
         require(!blocklist[from], "InternToken: sender is blocked");
         require(!blocklist[to], "InternToken: recipient is blocked");
         require(value > 0, "InternToken: transfer amount must be greater than 0");
-        //require(balanceOf(from) >= value, "InternToken: transfer amount exceeds balance");
+        require(balanceOf(from) >= value, "InternToken: transfer amount exceeds balance");
         uint256 taxAmount = (value * 2) / 100;   // 2% to treasury
         uint256 burnAmount = (value * 1) / 100;    // 1% burned
         uint256 sendAmount = value - taxAmount - burnAmount;
