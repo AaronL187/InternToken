@@ -128,9 +128,9 @@ describe("InternToken Contract", function () {
     });
 
     it("Should allow owner to pause and unpause the contract", async function () {
-      await hardhatToken.pause();
+      await hardhatToken.connect(owner).pause();
       expect(await hardhatToken.paused()).to.be.true;
-      await hardhatToken.unpause();
+      await hardhatToken.connect(owner).unpause();
       expect(await hardhatToken.paused()).to.be.false;
     });
 
@@ -216,6 +216,47 @@ describe("InternToken Contract", function () {
       ).to.be.reverted;
     });
   });
+
+  describe("Burn Functionality", function () {
+    const burnAmount = toWei(100);
+  
+    beforeEach(async function () {
+      await hardhatToken.mint(addr1.address, toWei(1000));
+    });
+  
+    it("Should allow a user to burn their own tokens", async function () {
+      const balanceBefore = await hardhatToken.balanceOf(addr1.address);
+      const totalSupplyBefore = await hardhatToken.totalSupply();
+  
+      await hardhatToken.connect(addr1).burn(burnAmount);
+  
+      const balanceAfter = await hardhatToken.balanceOf(addr1.address);
+      const totalSupplyAfter = await hardhatToken.totalSupply();
+  
+      expect(balanceAfter).to.equal(balanceBefore.sub(burnAmount));
+      expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(burnAmount));
+    });
+  
+    it("Should emit TokensBurned event with correct values", async function () {
+      await expect(hardhatToken.connect(addr1).burn(burnAmount))
+        .to.emit(hardhatToken, "TokensBurned")
+        .withArgs(addr1.address, burnAmount);
+    });
+  
+    it("Should revert when trying to burn 0 tokens", async function () {
+      await expect(
+        hardhatToken.connect(addr1).burn(0)
+      ).to.be.revertedWith("InternToken: burn amount must be greater than 0");
+    });
+  
+    it("Should revert when user tries to burn more than their balance", async function () {
+      const tooMuch = toWei(2000); // More than minted
+      await expect(
+        hardhatToken.connect(addr1).burn(tooMuch)
+      ).to.be.revertedWith("InternToken: burn amount exceeds balance");
+    });
+  });
+  
 
   /**
    * Helper function to convert a value to Wei (10^18).
