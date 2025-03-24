@@ -14,7 +14,6 @@ describe("InternToken Contract", function () {
   // --------------------- Deployment Tests --------------------- //
   describe("Deployment", function () {
     it("Should assign the initial supply to the owner", async function () {
-      // The initial supply is minted in the constructor to the recipient (here, owner)
       const ownerBalance = await hardhatToken.balanceOf(owner.address);
       expect(ownerBalance).to.equal(toWei(500000));
     });
@@ -26,7 +25,6 @@ describe("InternToken Contract", function () {
       await hardhatToken.mint(addr2.address, mintAmount);
 
       const totalSupply = await hardhatToken.totalSupply();
-      // Total supply should be: initial owner's supply + 2 * mintAmount
       const expectedSupply = (await hardhatToken.balanceOf(owner.address)).add(toWei(2000));
       expect(totalSupply).to.equal(expectedSupply);
     });
@@ -60,6 +58,18 @@ describe("InternToken Contract", function () {
       const ownerBalanceAfter = await hardhatToken.balanceOf(owner.address);
       expect(ownerBalanceAfter).to.equal(ownerBalanceBefore.add(toWei(1000)));
     });
+
+    it("Should revert when minting zero tokens", async function () {
+      await expect(
+        hardhatToken.mint(addr1.address, 0)
+      ).to.be.revertedWith("InternToken: mint amount must be greater than 0");
+    });
+
+    it("Should only allow the owner to mint tokens", async function () {
+      await expect(
+        hardhatToken.connect(addr1).mint(addr1.address, toWei(100))
+      ).to.be.reverted;
+    });
   });
 
   // --------------------- Metadata Tests --------------------- //
@@ -90,7 +100,6 @@ describe("InternToken Contract", function () {
       const treasuryBefore = await hardhatToken.balanceOf(treasuryWallet.address);
       const totalSupplyBefore = await hardhatToken.totalSupply();
 
-      // Perform the transfer from addr1 to addr2
       await hardhatToken.connect(addr1).transfer(addr2.address, transferAmount);
 
       const user1Balance = await hardhatToken.balanceOf(addr1.address);
@@ -103,23 +112,86 @@ describe("InternToken Contract", function () {
       expect(treasuryAfter.sub(treasuryBefore)).to.equal(taxAmount);
       expect(totalSupplyBefore.sub(totalSupplyAfter)).to.equal(burnAmount);
     });
+
+    it("Should revert transfers of zero tokens", async function () {
+      await expect(
+        hardhatToken.connect(addr1).transfer(addr2.address, 0)
+      ).to.be.revertedWith("InternToken: transfer amount must be greater than 0");
+    });
+  });
+
+  // --------------------- Pause/Unpause Tests --------------------- //
+  describe("Pause/Unpause Functionality", function () {
+    beforeEach(async function () {
+      // Mint tokens for testing transfer during pause/unpause
+      await hardhatToken.mint(addr1.address, toWei(1000));
+    });
+
+    it("Should allow owner to pause and unpause the contract", async function () {
+      await hardhatToken.pause();
+      expect(await hardhatToken.paused()).to.be.true;
+      await hardhatToken.unpause();
+      expect(await hardhatToken.paused()).to.be.false;
+    });
+
+    it("Should revert transfers when paused", async function () {
+      await hardhatToken.pause();
+      await expect(
+        hardhatToken.connect(addr1).transfer(addr2.address, toWei(100))
+      ).to.be.revertedWith("InternToken: token transfer while paused");
+    });
+
+    it("Should allow transfers after unpausing", async function () {
+      await hardhatToken.pause();
+      await hardhatToken.unpause();
+      await hardhatToken.connect(addr1).transfer(addr2.address, toWei(100));
+      const addr2Balance = await hardhatToken.balanceOf(addr2.address);
+      expect(addr2Balance).to.be.gt(0);
+    });
+
+    it("Should only allow owner to pause/unpause", async function () {
+      await expect(
+        hardhatToken.connect(addr1).pause()
+      ).to.be.reverted;
+      await hardhatToken.pause();
+      await expect(
+        hardhatToken.connect(addr1).unpause()
+      ).to.be.reverted;
+    });
+  });
+
+  // --------------------- Treasury Wallet Tests --------------------- //
+  describe("Treasury Wallet", function () {
+    it("Should only allow owner to set treasury wallet", async function () {
+      await expect(
+        hardhatToken.connect(addr1).setTreasuryWallet(treasuryWallet.address)
+      ).to.be.reverted;
+    });
+
+    it("Should revert when setting treasury wallet to the zero address", async function () {
+      await expect(
+        hardhatToken.setTreasuryWallet(ethers.constants.AddressZero)
+      ).to.be.revertedWith("InternToken: treasury wallet is the zero address");
+    });
+
+    it("Should revert when setting treasury wallet to the contract address", async function () {
+      await expect(
+        hardhatToken.setTreasuryWallet(hardhatToken.address)
+      ).to.be.revertedWith("InternToken: treasury wallet is the contract address");
+    });
   });
 
   // --------------------- Blocklist Tests --------------------- //
   describe("Blocklist Functionality", function () {
     it("Should block and unblock an address", async function () {
-      // Block addr1 and check its status
       await hardhatToken.blockAddress(addr1.address);
       expect(await hardhatToken.blocklist(addr1.address)).to.be.true;
-      
-      // Unblock addr1 and check its status
       await hardhatToken.unblockAddress(addr1.address);
       expect(await hardhatToken.blocklist(addr1.address)).to.be.false;
     });
 
     it("Should revert transfer from a blocked sender", async function () {
-      const mintAmount = toWei(1000);
-      await hardhatToken.mint(addr1.address, mintAmount);
+      await hardhatToken.mint(addr1.address, toWei(1000));
       await hardhatToken.blockAddress(addr1.address);
       await expect(
         hardhatToken.connect(addr1).transfer(addr2.address, toWei(100))
@@ -127,12 +199,21 @@ describe("InternToken Contract", function () {
     });
 
     it("Should revert transfer to a blocked recipient", async function () {
-      const mintAmount = toWei(1000);
-      await hardhatToken.mint(addr1.address, mintAmount);
+      await hardhatToken.mint(addr1.address, toWei(1000));
       await hardhatToken.blockAddress(addr2.address);
       await expect(
         hardhatToken.connect(addr1).transfer(addr2.address, toWei(100))
       ).to.be.revertedWith("InternToken: recipient is blocked");
+    });
+
+    it("Should only allow owner to block or unblock addresses", async function () {
+      await expect(
+        hardhatToken.connect(addr1).blockAddress(addr2.address)
+      ).to.be.reverted;
+      await hardhatToken.blockAddress(addr2.address);
+      await expect(
+        hardhatToken.connect(addr1).unblockAddress(addr2.address)
+      ).to.be.reverted;
     });
   });
 
